@@ -7,7 +7,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// Paleta de Cocina Capital
 private val MentaClaro = Color(0xFFCFF0EA)
 private val Menta = Color(0xFF88C9C4)
 private val VerdeAgua = Color(0xFF3E9B94)

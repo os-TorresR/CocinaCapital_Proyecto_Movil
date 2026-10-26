@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.Image
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -55,11 +55,10 @@ fun LoginScreen(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Spacer(Modifier.height(48.dp))
-        Icon(
-            painter = painterResource(R.drawable.ic_logo),
+        Image(
+            painter = painterResource(R.drawable.logo_cocina_capital),
             contentDescription = "Logo Cocina Capital",
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(88.dp)
+            modifier = Modifier.size(180.dp)
         )
         Text(
             "Cocina Capital",

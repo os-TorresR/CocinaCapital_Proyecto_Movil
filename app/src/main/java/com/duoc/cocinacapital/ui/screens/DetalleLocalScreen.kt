@@ -1,5 +1,6 @@
 package com.duoc.cocinacapital.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
@@ -95,11 +96,10 @@ fun DetalleLocalScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_logo),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(96.dp)
+            Image(
+                painter = painterResource(R.drawable.logo_cocina_capital),
+                contentDescription = "Logo Cocina Capital",
+                modifier = Modifier.size(160.dp)
             )
 
             Text(
