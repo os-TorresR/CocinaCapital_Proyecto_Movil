@@ -1,6 +1,8 @@
 package com.duoc.cocinacapital.ui.screens
 
+import android.Manifest
 import android.content.ActivityNotFoundException
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
@@ -26,8 +28,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,21 +40,54 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import com.duoc.cocinacapital.ui.components.CuponCard
 import com.duoc.cocinacapital.ui.components.TextoError
 import com.duoc.cocinacapital.viewmodel.AppViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun PerfilTab(viewModel: AppViewModel, onCerrarSesion: () -> Unit) {
     val usuario by viewModel.usuario.collectAsState()
     val foto by viewModel.foto.collectAsState()
+    val cupones by viewModel.cupones.collectAsState()
     var errorCamara by remember { mutableStateOf<String?>(null) }
+
+    // Reloj que se actualiza cada segundo (tiempo restante y ocultar cupones vencidos)
+    var ahora by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000)
+            ahora = System.currentTimeMillis()
+        }
+    }
+    // Solo los cupones por canjear: ni los usados ni los vencidos
+    val cuponesPorCanjear = cupones.filter { it.vigente(ahora) }
 
     // Recurso nativo 2: cámara (abre la app de cámara del sistema y devuelve una miniatura)
     val camaraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicturePreview()
     ) { bitmap -> viewModel.onFotoTomada(bitmap) }
+
+    val context = LocalContext.current
+
+    // Pide el permiso y, si el usuario acepta, abre la cámara
+    val permisoCamaraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { concedido ->
+        if (concedido) {
+            try {
+                camaraLauncher.launch(null)
+            } catch (e: ActivityNotFoundException) {
+                errorCamara = "No se encontró una app de cámara"
+            }
+        } else {
+            errorCamara = "Permiso de cámara denegado"
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -84,10 +121,18 @@ fun PerfilTab(viewModel: AppViewModel, onCerrarSesion: () -> Unit) {
         Button(
             onClick = {
                 errorCamara = null
-                try {
-                    camaraLauncher.launch(null)
-                } catch (e: ActivityNotFoundException) {
-                    errorCamara = "No se encontró una app de cámara"
+                val tienePermiso = ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+
+                if (tienePermiso) {
+                    try {
+                        camaraLauncher.launch(null)
+                    } catch (e: ActivityNotFoundException) {
+                        errorCamara = "No se encontró una app de cámara"
+                    }
+                } else {
+                    permisoCamaraLauncher.launch(Manifest.permission.CAMERA)
                 }
             }
         ) {
@@ -112,6 +157,25 @@ fun PerfilTab(viewModel: AppViewModel, onCerrarSesion: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        // ---------- Mis cupones por canjear ----------
+        Text(
+            "Mis cupones por canjear",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
+        )
+        if (cuponesPorCanjear.isEmpty()) {
+            Text(
+                "No tienes cupones. Canjea un ticket en un local y aparecerá aquí.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            cuponesPorCanjear.forEach { CuponCard(it, ahora) }
+        }
 
         OutlinedButton(
             onClick = { viewModel.cerrarSesion(onCerrarSesion) },

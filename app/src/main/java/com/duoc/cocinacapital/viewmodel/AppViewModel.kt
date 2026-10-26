@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.duoc.cocinacapital.data.UsuarioDataStore
 import com.duoc.cocinacapital.model.Aviso
 import com.duoc.cocinacapital.model.CompraUiState
+import com.duoc.cocinacapital.model.Cupon
 import com.duoc.cocinacapital.model.Coordenadas
 import com.duoc.cocinacapital.model.Local
 import com.duoc.cocinacapital.model.LocalItem
@@ -44,6 +45,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     val saldo: StateFlow<Int> = dataStore.obtenerSaldo()
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
+    // Registro de cupones del usuario (por canjear, canjeados y vencidos)
+    val cupones: StateFlow<List<Cupon>> = dataStore.obtenerCupones()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val _ubicacion = MutableStateFlow<Coordenadas?>(null)
     val ubicacion: StateFlow<Coordenadas?> = _ubicacion.asStateFlow()
@@ -100,6 +105,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // ---------- Canje (RN-01: un ticket se usa una sola vez) ----------
+    // Al canjear un ticket se genera un cupón (código + QR) que dura 1 hora
     fun canjear(local: Local) {
         if (saldo.value <= 0) {
             mostrarAviso(
@@ -112,13 +118,61 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         viewModelScope.launch {
+            val existentes = cupones.value
+            var codigo = Seguridad.generarCodigoCanje()
+            while (existentes.any { it.codigo == codigo }) {
+                codigo = Seguridad.generarCodigoCanje()
+            }
+
+            val cupon = Cupon(
+                codigo = codigo,
+                localNombre = local.nombre,
+                beneficio = local.beneficio,
+                creadoEn = System.currentTimeMillis()
+            )
             dataStore.guardarSaldo(saldo.value - 1)
-            val codigo = Seguridad.generarCodigoCanje()
+            dataStore.guardarCupones(existentes + cupon)
             mostrarAviso(
-                Aviso("Canje exitoso en ${local.nombre}. Código: $codigo")
+                Aviso("¡Cupón listo! Búscalo en tu Perfil, vale por 1 hora. Código: $codigo")
             )
         }
     }
+
+    // El comercio escanea el QR (o escribe el código) para canjear el cupón
+    fun canjearCupon(codigoLeido: String?) {
+        val codigo = codigoLeido?.trim()?.uppercase().orEmpty()
+        if (codigo.isEmpty()) {
+            mostrarAviso(Aviso("Escanea o escribe un código", esError = true))
+            return
+        }
+
+        val lista = cupones.value
+        val cupon = lista.find { it.codigo == codigo }
+        val ahora = System.currentTimeMillis()
+
+        when {
+            cupon == null ->
+                mostrarAviso(Aviso("El código $codigo no existe", esError = true))
+
+            cupon.canjeado ->
+                mostrarAviso(Aviso("Este cupón ya fue canjeado", esError = true))
+
+            !cupon.vigente(ahora) ->
+                mostrarAviso(Aviso("Este cupón venció", esError = true))
+
+            else -> viewModelScope.launch {
+                // Queda marcado como canjeado: sale de la lista por canjear
+                dataStore.guardarCupones(
+                    lista.map { if (it.codigo == codigo) it.copy(canjeado = true) else it }
+                )
+                mostrarAviso(
+                    Aviso("Cupón válido: ${cupon.beneficio} en ${cupon.localNombre}")
+                )
+            }
+        }
+    }
+
+    fun mostrarError(texto: String) = mostrarAviso(Aviso(texto, esError = true))
 
     // ---------- Recursos nativos ----------
     fun onUbicacionObtenida(coordenadas: Coordenadas?) {

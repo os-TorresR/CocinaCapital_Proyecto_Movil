@@ -56,4 +56,7 @@ dependencies {
 
     // Persistencia local
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // QR: generar el código (ZXing) y escanearlo (escáner de Google, no pide permiso de cámara)
+    implementation("com.google.zxing:core:3.5.3")
 }
