@@ -7,40 +7,65 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// Paleta de la marca (tonos de cocina: terracota y oliva)
-private val Terracota = Color(0xFFB5462B)
-private val TerracotaClaro = Color(0xFFFFDBD1)
-private val Oliva = Color(0xFF5C6B2E)
-private val OlivaClaro = Color(0xFFDFEBB0)
+// Paleta de Cocina Capital
+private val MentaClaro = Color(0xFFCFF0EA)
+private val Menta = Color(0xFF88C9C4)
+private val VerdeAgua = Color(0xFF3E9B94)
+private val Petroleo = Color(0xFF20666B)
+private val PetroleoOscuro = Color(0xFF0C3B45)
 
 private val EsquemaClaro = lightColorScheme(
-    primary = Terracota,
+    primary = Petroleo,
     onPrimary = Color.White,
-    primaryContainer = TerracotaClaro,
-    onPrimaryContainer = Color(0xFF3B0900),
-    secondary = Oliva,
+    primaryContainer = MentaClaro,
+    onPrimaryContainer = PetroleoOscuro,
+    secondary = Petroleo,
     onSecondary = Color.White,
-    secondaryContainer = OlivaClaro,
-    onSecondaryContainer = Color(0xFF1A2000),
-    background = Color(0xFFFFFBFF),
-    surface = Color(0xFFFFFBFF)
+    secondaryContainer = Menta,
+    onSecondaryContainer = PetroleoOscuro,
+    tertiary = VerdeAgua,
+    onTertiary = PetroleoOscuro,
+    tertiaryContainer = MentaClaro,
+    onTertiaryContainer = PetroleoOscuro,
+    background = Color.White,
+    onBackground = PetroleoOscuro,
+    surface = Color.White,
+    onSurface = PetroleoOscuro,
+    surfaceVariant = MentaClaro,
+    onSurfaceVariant = PetroleoOscuro,
+    outline = Petroleo
 )
 
 private val EsquemaOscuro = darkColorScheme(
-    primary = Color(0xFFFFB4A0),
-    onPrimary = Color(0xFF5F1500),
-    primaryContainer = Color(0xFF8E2F17),
-    onPrimaryContainer = TerracotaClaro,
-    secondary = Color(0xFFC3CF96),
-    onSecondary = Color(0xFF2D3505),
-    secondaryContainer = Color(0xFF444F18),
-    onSecondaryContainer = OlivaClaro
+    primary = Menta,
+    onPrimary = PetroleoOscuro,
+    primaryContainer = Petroleo,
+    onPrimaryContainer = MentaClaro,
+    secondary = MentaClaro,
+    onSecondary = PetroleoOscuro,
+    secondaryContainer = Petroleo,
+    onSecondaryContainer = MentaClaro,
+    tertiary = VerdeAgua,
+    onTertiary = PetroleoOscuro,
+    tertiaryContainer = Petroleo,
+    onTertiaryContainer = MentaClaro,
+    background = PetroleoOscuro,
+    onBackground = MentaClaro,
+    surface = PetroleoOscuro,
+    onSurface = MentaClaro,
+    surfaceVariant = Petroleo,
+    onSurfaceVariant = MentaClaro,
+    outline = Menta
 )
 
 @Composable
 fun CocinaCapitalTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) EsquemaOscuro else EsquemaClaro,
+        colorScheme = if (isSystemInDarkTheme()) {
+            EsquemaOscuro
+        } else {
+            EsquemaClaro
+        },
         content = content
     )
 }
